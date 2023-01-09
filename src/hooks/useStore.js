@@ -1,50 +1,46 @@
-import { nanoid } from "nanoid";
 import create from "zustand";
+import { nanoid } from "nanoid";
+
+const getLocalStorage = (key) => JSON.parse(window.localStorage.getItem(key));
+const setLocalStorage = (key, value) =>
+  window.localStorage.setItem(key, JSON.stringify(value));
 
 export const useStore = create((set) => ({
   texture: "dirt",
-  cubes: [
-    {
-      id: nanoid(),
-      pos: [1, 1, 1],
-      texture: "dirt",
-    },
-    {
-      id: nanoid(),
-      pos: [1, 5, 1],
-      texture: "log",
-    },
-  ],
+  cubes: getLocalStorage("cubes") || [],
   addCube: (x, y, z) => {
-    set((state) => ({
+    set((prev) => ({
       cubes: [
-        ...state.cubes,
+        ...prev.cubes,
         {
-          id: nanoid(),
-          texture: state.texture,
+          key: nanoid(),
           pos: [x, y, z],
+          texture: prev.texture,
         },
       ],
     }));
   },
-  removeCube: (id) => {
-    set((state) => ({
-      cubes: state.cubes.filter((cube) => cube.id !== id),
+  removeCube: (x, y, z) => {
+    set((prev) => ({
+      cubes: prev.cubes.filter((cube) => {
+        const [X, Y, Z] = cube.pos;
+        return X !== x || Y !== y || Z !== z;
+      }),
     }));
   },
-
-  // remoeCube: (x, y, z) => {
-  //   set((state) => ({
-  //     cubes: state.cubes.filter((cube) => {
-  //       const [x, y, z] = cube.pos;
-  //       return x !== x || y !== z || z !== z;
-  //     }),
-  //   }));
-  // },
-
   setTexture: (texture) => {
-    set(() => ({ texture }));
+    set(() => ({
+      texture,
+    }));
   },
-  saveWorld: () => {},
-  resetWorld: () => {},
+  saveWorld: () => {
+    set((prev) => {
+      setLocalStorage("cubes", prev.cubes);
+    });
+  },
+  resetWorld: () => {
+    set(() => ({
+      cubes: [],
+    }));
+  },
 }));
